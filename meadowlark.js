@@ -1,14 +1,36 @@
 var express = require('express');
+
 const { getFortune } = require("./lib/fortune.js");
 var app = express();
+
+// adding static middleware
+app.use(express.static(__dirname + '/public'));
+
 app.set('port', process.env.PORT || 3000);
+
+app.use(function (req, res, next) {
+    res.locals.showTests = app.get('env') !== 'production' &&
+        req.query.test === '1';
+    next();
+});
 
 app.get('/', function (req, res) {
     res.render('home');
 });
 app.get('/about', function (req, res) {
-    res.render('about', { fortune: getFortune() });
+    res.render('about', {
+        fortune: getFortune(),
+        pageTestScript: '/qa/tests-about.js'
+    });
 });
+
+app.get('/tours/hood-river', function (req, res) {
+    res.render('tours/hood-river');
+});
+app.get('/tours/request-group-rate', function (req, res) {
+    res.render('tours/request-group-rate');
+});
+
 // 404 catch-all handler (middleware)
 app.use(function (req, res, next) {
     res.status(404);
@@ -31,5 +53,4 @@ var handlebars = require('express-handlebars')
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 
-// adding static middleware
-app.use(express.static(__dirname + '/public'));
+
