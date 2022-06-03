@@ -14,8 +14,6 @@
     "express-handlebars": "^6.0.6"
   },
   "devDependencies": {
-    "chai": "^4.3.6",
-    "mocha": "^10.0.0",
-    "zombie": "^6.1.4"
+    "jest": "^28.1.0"
   }
 }

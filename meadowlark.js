@@ -1,35 +1,99 @@
-var express = require('express');
+const express = require('express');
+const app = express();
+const handlers = require('./lib/handlers.js')
 
-const { getFortune } = require("./lib/fortune.js");
-var app = express();
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+
+
+
+// app.disable('x-powered-by');
+const expresshandlebars = require("express-handlebars").create({
+    defaultLayout: 'main',
+    helpers: {
+        section: function (name, options) {
+            if (!this._sections) this._sections = {};
+            this._sections[name] = options.fn(this);
+            return null;
+        }
+    }
+});
+
+app.engine('handlebars', expresshandlebars.engine);
+app.set('view engine', 'handlebars');
+
 
 // adding static middleware
 app.use(express.static(__dirname + '/public'));
 
-app.set('port', process.env.PORT || 3000);
+const port = process.env.PORT || 3000;
 
-app.use(function (req, res, next) {
-    res.locals.showTests = app.get('env') !== 'production' &&
-        req.query.test === '1';
-    next();
-});
 
 app.get('/', function (req, res) {
-    res.render('home');
+    res.render('home', { title: 'Home meadowlark' });
 });
+
+app.get('/re', function (req, res) {
+    res.redirect(302, "about");
+});
+
+app.get('/js', function (req, res) {
+    res.type('text/plain');
+    res.json(array = ['FrontMan', 'meadowlark', 'testing object with res.send'
+    ]);
+});
+
+
+app.get('/headers', (req, res) => {
+    res.type('text/plain')
+    const headers = Object.entries(req.headers)
+        .map(([key, value]) => `${key}: ${value}`)
+    res.send(headers.join('\n'))
+})
+
 app.get('/about', function (req, res) {
     res.render('about', {
         fortune: getFortune(),
-        pageTestScript: '/qa/tests-about.js'
+        title: 'About Meadowlark',
     });
 });
 
 app.get('/tours/hood-river', function (req, res) {
+    console.log({
+        reqUrl: req.url,
+        reqPath: req.path,
+        reqQuery: req.query,
+        reqBody: req.body,
+        // reqHeader: req.headers,
+        reqRoute: req.route,
+        reqParams: req.params,
+        // reqCookies: req.cookies,
+        reqAccept: req.accepts('pics'),
+        reqIP: req.ip,
+        //The next line is discouraged in usage
+        reqHostname: req.hostname,
+        //The line above is dicouraged in usage
+        reqProtocol: req.protocol,
+        reqSecure: req.secure,
+        reqXhr: req.xhr,
+    })
     res.render('tours/hood-river');
 });
 app.get('/tours/request-group-rate', function (req, res) {
+    // console.log({
+    //     reqUrl: req.url,
+    //     reqPath: req.path,
+    //     reqQuery: req.query,
+    // })
     res.render('tours/request-group-rate');
 });
+app.get('/newsletter-signup', handlers.newsletterSignup);
+app.post('/newsletter-signup/process', handlers.newsletterSignupProcess);
+app.get('/newsletter-signup/thank-you', handlers.newsletterSignupThankYou);
+
+const { getFortune } = require("./lib/fortune.js");
 
 // 404 catch-all handler (middleware)
 app.use(function (req, res, next) {
@@ -42,15 +106,11 @@ app.use(function (err, req, res, next) {
     res.status(500);
     res.render('500');
 });
-app.listen(app.get('port'), function () {
-    console.log('Express started on http://localhost:' +
-        app.get('port') + '; press Ctrl-C to terminate.');
+app.listen(port, function () {
+    console.log(`Express started on http://localhost:' +
+            ${port} press Ctrl - C to terminate.`);
 });
 
-// set up handlebars view engine
-var handlebars = require('express-handlebars')
-    .create({ defaultLayout: 'main' });
-app.engine('handlebars', handlebars.engine);
-app.set('view engine', 'handlebars');
+
 
 
