@@ -1,12 +1,17 @@
 const express = require('express');
 const app = express();
-const handlers = require('./lib/handlers.js')
-
 const bodyParser = require('body-parser');
+const multiparty = require('multiparty')
+
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json())
 
 
+const handlers = require('./lib/handlers.js')
+const { getFortune } = require("./lib/fortune.js");
+const { credentials } = require('./config')
 
+// const multiparty = require('multiparty')
 
 
 // app.disable('x-powered-by');
@@ -20,7 +25,6 @@ const expresshandlebars = require("express-handlebars").create({
         }
     }
 });
-
 app.engine('handlebars', expresshandlebars.engine);
 app.set('view engine', 'handlebars');
 
@@ -29,6 +33,55 @@ app.set('view engine', 'handlebars');
 app.use(express.static(__dirname + '/public'));
 
 const port = process.env.PORT || 3000;
+
+//Experiment
+
+// app.use((req, res, next) => {
+//     console.log('\n\nALLWAYS')
+//     next()
+// })
+// app.get('/a', (req, res) => {
+//     console.log('/a: route terminated')
+//     res.send('a')
+// })
+// app.get('/a', (req, res) => { console.log('/a: never called'); })
+// app.get('/b', (req, res, next) => {
+//     console.log('/b: route not terminated')
+//     next()
+// })
+// app.use((req, res, next) => {
+//     console.log('SOMETIMES')
+//     next()
+// })
+// app.get('/b', (req, res, next) => {
+//     console.log('/b (part 2): error thrown')
+//     throw new Error('b failed')
+// })
+// app.use('/b', (err, req, res, next) => {
+//     console.log('/b error detected and passed on')
+//     next(err)
+// })
+// app.get('/c', (err, req) => {
+//     console.log('/c: error thrown')
+//     throw new Error('c failed')
+// })
+// app.use('/c', (err, req, res, next) => {
+//     console.log('/c: error detected but not passed on')
+//     next()
+// })
+// app.use((err, req, res, next) => {
+//     console.log('unhandled error detected: ' + err.message)
+//     res.send('500 - server error')
+// })
+// app.use((req, res) => {
+//     console.log('route not handled')
+//     res.send('404 - not found')
+// })
+
+//Experimet
+
+
+
 
 
 app.get('/', function (req, res) {
@@ -70,7 +123,7 @@ app.get('/tours/hood-river', function (req, res) {
         reqRoute: req.route,
         reqParams: req.params,
         // reqCookies: req.cookies,
-        reqAccept: req.accepts('pics'),
+        // reqAccept: req.accepts('pics'),
         reqIP: req.ip,
         //The next line is discouraged in usage
         reqHostname: req.hostname,
@@ -93,8 +146,31 @@ app.get('/newsletter-signup', handlers.newsletterSignup);
 app.post('/newsletter-signup/process', handlers.newsletterSignupProcess);
 app.get('/newsletter-signup/thank-you', handlers.newsletterSignupThankYou);
 
-const { getFortune } = require("./lib/fortune.js");
+app.get('/newsletter', handlers.newsletter)
+app.post('/api/newsletter-signup', handlers.api.newsletterSignup)
 
+//added by me
+app.get('/vacationphoto', handlers.vacationPhoto)
+app.get('/vacationphotoajax', handlers.vacationPhotoAjax)
+//added by me
+
+app.post('/contest/vacation-photo/:year/:month', (req, res) => {
+    const form = new multiparty.Form()
+    form.parse(req, (err, fields, files) => {
+        if (err) return res.status(500).send({ error: err.message })
+        handlers.vacationPhotoContestProcess(req, res, fields, files)
+    })
+})
+app.get('/contest/vacation-photo-thank-you', handlers.vacationPhotoContestProcessThankYou)
+
+app.post('/api/contest-vacation-photo/:year/:month', (req, res) => {
+    console.log('got here')
+    const form = new multiparty.Form()
+    form.parse(req, (err, fields, files) => {
+        if (err) return res.status(500).send({ error: err.message })
+        handlers.api.vacationPhotoContest(req, res, fields, files)
+    })
+})
 // 404 catch-all handler (middleware)
 app.use(function (req, res, next) {
     res.status(404);
@@ -110,7 +186,3 @@ app.listen(port, function () {
     console.log(`Express started on http://localhost:' +
             ${port} press Ctrl - C to terminate.`);
 });
-
-
-
-
